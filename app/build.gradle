@@ -1,0 +1,91 @@
+import java.text.SimpleDateFormat
+
+apply plugin: 'com.android.application'
+
+def static gitSha() {
+    return 'git rev-parse --short HEAD'.execute().text.trim()
+}
+
+def static buildTime() {
+    def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+    df.setTimeZone(TimeZone.getTimeZone("UTC"))
+    return df.format(new Date())
+}
+
+android {
+    compileSdkVersion 27
+    buildToolsVersion "27.0.1"
+    defaultConfig {
+        applicationId "com.kassdee.Soundscape"
+        minSdkVersion 19
+        targetSdkVersion 27
+        versionCode Integer.parseInt(VERSION_BUILD)
+        versionName "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+        buildConfigField 'String', 'BUILD_TIME', "\"${buildTime()}\""
+        buildConfigField 'String', 'SHA', "\"${gitSha()}\""
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions "default"
+    productFlavors {
+        beta {
+            dimension "default"
+            applicationIdSuffix '.beta'
+            versionName "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_BUILD}-${buildTime()}"
+        }
+
+        playStore {
+            dimension "default"
+            versionName "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:27.0.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+
+    // Retrofit
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+
+    // RxJava
+    implementation 'com.android.support:design:27.0.1'
+    implementation "io.reactivex.rxjava2:rxjava:$rxjava_version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxandroid_version"
+
+    //Dagger
+    compile "com.google.dagger:dagger:$dagger_version"
+    annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
+
+    // TESTING
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    // DEVELOPMENT TOOLS
+
+    // Helps find memory leaks
+
+    //There is a dex issue with version 1.5.2 of leakcanary, so using 1.5.1
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
+    // Logger for networking calls
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.8.1'
+}
+// TODO: Uncomment if using google play services, delete otherwise
+// apply plugin: 'com.google.gms.google-services'
+apply from: '../config/quality.gradle'
